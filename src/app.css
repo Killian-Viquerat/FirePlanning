@@ -1,0 +1,419 @@
+@import "tailwindcss";
+
+body {
+  @apply m-0 min-h-screen bg-slate-100 text-slate-800 antialiased;
+}
+
+#app {
+  @apply w-full max-w-none p-3 md:p-4;
+}
+
+h1 {
+  @apply m-0 mb-4 text-2xl font-bold tracking-tight md:text-3xl;
+}
+
+h2 {
+  @apply m-0 mb-3 text-xl font-semibold tracking-tight;
+}
+
+main {
+  @apply grid gap-4;
+}
+
+.top-nav {
+  @apply sticky top-2 z-20 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur;
+}
+
+.top-nav button {
+  @apply rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-700;
+}
+
+.top-nav button.active {
+  @apply border-teal-600 bg-teal-600 text-white;
+}
+
+.top-nav .theme-toggle {
+  @apply ml-auto;
+}
+
+.card {
+  @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+}
+
+.dashboard-grid {
+  @apply mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4;
+}
+
+.dashboard-tile {
+  @apply grid gap-1 rounded-xl border border-slate-200 bg-slate-50 p-3;
+}
+
+.dashboard-tile span {
+  @apply text-2xl font-bold;
+}
+
+.row {
+  @apply flex flex-wrap items-end gap-3;
+}
+
+.grid {
+  @apply grid gap-3 md:grid-cols-2 xl:grid-cols-3;
+}
+
+label {
+  @apply flex min-w-[180px] flex-col gap-1 text-sm font-medium text-slate-700;
+}
+
+input,
+select,
+button {
+  @apply font-sans;
+}
+
+input,
+select {
+  @apply rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-200;
+}
+
+button {
+  @apply cursor-pointer rounded-xl border border-slate-700 bg-slate-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800;
+}
+
+.button-danger {
+  @apply border-red-700 bg-red-700 hover:bg-red-800;
+}
+
+.checks {
+  @apply flex flex-wrap gap-3;
+}
+
+.check {
+  @apply min-w-fit flex-row items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm;
+}
+
+.role-badge {
+  @apply inline-flex items-center rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800;
+}
+
+.grade-badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold text-white;
+}
+
+.grade-badge.red {
+  @apply bg-red-600;
+}
+
+.grade-badge.green {
+  @apply bg-emerald-600;
+}
+
+.grade-badge.blue {
+  @apply bg-blue-600;
+}
+
+.grade-badge.orange {
+  @apply bg-orange-500;
+}
+
+.grade-badge.gray {
+  @apply bg-slate-500;
+}
+
+.list {
+  @apply mt-3 grid gap-2;
+}
+
+.list article {
+  @apply flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2;
+}
+
+.list .list-link {
+  @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-slate-800 hover:border-teal-500 hover:bg-teal-50;
+}
+
+.alerts article {
+  @apply mb-3 rounded-xl border-l-8 border-red-600 bg-red-50 p-4 text-base leading-7;
+}
+
+.alerts .alert-card.warning {
+  @apply border-amber-600 bg-amber-50;
+}
+
+.alerts .alert-card.error {
+  @apply border-red-600 bg-red-50;
+}
+
+.ok {
+  @apply text-emerald-700;
+}
+
+small {
+  @apply text-sm text-slate-500;
+}
+
+.page-hidden {
+  @apply hidden;
+}
+
+.calendar-page .calendar-card {
+  @apply min-h-[72vh] overflow-hidden border-slate-300 bg-gradient-to-b from-white to-slate-50;
+}
+
+.calendar-head {
+  @apply mb-3 flex flex-wrap items-center justify-between gap-2;
+}
+
+.calendar-badge {
+  @apply rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-700;
+}
+
+.calendar-frame {
+  @apply rounded-2xl border border-slate-200 bg-white p-2 shadow-inner md:p-3;
+}
+
+.calendar-controls {
+  @apply mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2;
+}
+
+.calendar-controls button {
+  @apply border-slate-300 bg-white text-slate-700 hover:border-teal-500 hover:bg-teal-50 hover:text-teal-700;
+}
+
+.calendar-controls button.active {
+  @apply border-teal-600 bg-teal-600 text-white hover:bg-teal-700;
+}
+
+.calendar-range {
+  @apply text-sm font-semibold text-slate-600;
+}
+
+.calendar-date-picker {
+  @apply min-w-[160px] text-xs font-semibold uppercase tracking-wide text-slate-500;
+}
+
+.calendar-date-picker input {
+  @apply mt-1 rounded-lg px-2 py-1.5 text-sm;
+}
+
+.calendar-host {
+  @apply w-full overflow-hidden;
+}
+
+.custom-calendar-grid {
+  display: grid;
+  grid-template-columns: 56px repeat(var(--calendar-days), minmax(0, 1fr));
+  grid-template-rows: auto calc(var(--calendar-rows) * var(--calendar-row-height));
+  width: 100%;
+  @apply overflow-hidden rounded-xl border border-slate-200 bg-white;
+}
+
+.time-corner {
+  @apply border-b border-r border-slate-200 bg-slate-50;
+}
+
+.calendar-day-header {
+  @apply border-b border-slate-200 bg-slate-50 px-1 py-2 text-center text-xs font-semibold text-slate-700 md:text-sm;
+}
+
+.calendar-day-header.member-header {
+  @apply flex flex-col items-center gap-1 px-1 py-1 text-[11px] md:text-xs;
+}
+
+.calendar-member-name {
+  @apply max-w-full truncate text-center;
+}
+
+.time-axis {
+  @apply border-r border-slate-200 bg-slate-50;
+}
+
+.time-axis-slot {
+  height: var(--calendar-row-height);
+  @apply border-b border-slate-200 px-1 text-right text-[10px] leading-6 text-slate-500 md:px-2 md:text-[11px];
+}
+
+.calendar-day-column {
+  height: calc(var(--calendar-rows) * var(--calendar-row-height));
+  @apply relative border-r border-slate-200 bg-white;
+}
+
+.calendar-day-column:last-child {
+  @apply border-r-0;
+}
+
+.calendar-slot-line {
+  height: var(--calendar-row-height);
+  @apply border-b border-slate-100;
+}
+
+.calendar-slot-line.selectable {
+  @apply block w-full cursor-crosshair rounded-none border-x-0 border-t-0 border-b border-slate-100 bg-transparent p-0 text-transparent shadow-none hover:bg-transparent;
+}
+
+.calendar-slot-line.selectable.selected {
+  @apply bg-teal-100;
+}
+
+.calendar-event-block {
+  @apply absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-md border-0 px-1 py-1 text-left text-[11px] font-semibold shadow-sm md:left-1 md:right-1 md:px-2 md:text-xs;
+}
+
+.calendar-event-block.presence {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.calendar-event-block.absence {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.calendar-event-block.removable {
+  @apply cursor-pointer transition hover:brightness-110;
+}
+
+:root[data-theme='dark'] body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+:root[data-theme='dark'] .top-nav {
+  @apply border-slate-700 bg-slate-900/90;
+}
+
+:root[data-theme='dark'] .top-nav button {
+  @apply border-slate-700 bg-slate-800 text-slate-200 hover:border-teal-400 hover:bg-teal-900/40 hover:text-teal-100;
+}
+
+:root[data-theme='dark'] .top-nav button.active {
+  @apply border-teal-500 bg-teal-500 text-slate-950;
+}
+
+:root[data-theme='dark'] .card {
+  @apply border-slate-700 bg-slate-900;
+}
+
+:root[data-theme='dark'] .calendar-page .calendar-card {
+  @apply border-slate-700 from-slate-900 to-slate-950;
+}
+
+:root[data-theme='dark'] .calendar-badge {
+  @apply border-teal-700 bg-teal-900/40 text-teal-200;
+}
+
+:root[data-theme='dark'] .calendar-frame {
+  @apply border-slate-700 bg-slate-900;
+}
+
+:root[data-theme='dark'] .calendar-controls {
+  @apply border-slate-700 bg-slate-800;
+}
+
+:root[data-theme='dark'] .calendar-controls button {
+  @apply border-slate-600 bg-slate-700 text-slate-100 hover:border-teal-500 hover:bg-teal-900/40;
+}
+
+:root[data-theme='dark'] .calendar-controls button.active {
+  @apply border-teal-500 bg-teal-500 text-slate-950;
+}
+
+:root[data-theme='dark'] .calendar-range {
+  @apply text-slate-300;
+}
+
+:root[data-theme='dark'] .calendar-date-picker {
+  @apply text-slate-400;
+}
+
+:root[data-theme='dark'] .dashboard-tile {
+  @apply border-slate-700 bg-slate-800;
+}
+
+:root[data-theme='dark'] label {
+  @apply text-slate-300;
+}
+
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] select {
+  @apply border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-teal-400 focus:ring-teal-900/60;
+}
+
+:root[data-theme='dark'] .check,
+:root[data-theme='dark'] .list article,
+:root[data-theme='dark'] .list .list-link {
+  @apply border-slate-700 bg-slate-800 text-slate-100;
+}
+
+:root[data-theme='dark'] .role-badge {
+  @apply border-teal-700 bg-teal-900/50 text-teal-100;
+}
+
+:root[data-theme='dark'] .alerts .alert-card.warning {
+  @apply bg-amber-950/60;
+}
+
+:root[data-theme='dark'] .alerts .alert-card.error {
+  @apply bg-red-950/60;
+}
+
+:root[data-theme='dark'] .ok {
+  @apply text-emerald-400;
+}
+
+:root[data-theme='dark'] small {
+  @apply text-slate-400;
+}
+
+:root[data-theme='dark'] .custom-calendar-grid {
+  @apply border-slate-700 bg-slate-900;
+}
+
+:root[data-theme='dark'] .time-corner,
+:root[data-theme='dark'] .calendar-day-header,
+:root[data-theme='dark'] .time-axis {
+  @apply border-slate-700 bg-slate-800;
+}
+
+:root[data-theme='dark'] .calendar-day-header {
+  @apply text-slate-200;
+}
+
+:root[data-theme='dark'] .time-axis-slot {
+  @apply border-slate-700 text-slate-400;
+}
+
+:root[data-theme='dark'] .calendar-day-column {
+  @apply border-slate-700 bg-slate-900;
+}
+
+:root[data-theme='dark'] .calendar-slot-line {
+  @apply border-slate-800;
+}
+
+:root[data-theme='dark'] .calendar-slot-line.selectable {
+  @apply border-slate-800;
+}
+
+:root[data-theme='dark'] .calendar-slot-line.selectable.selected {
+  @apply bg-teal-900/50;
+}
+
+:root[data-theme='dark'] .calendar-event-block.removable {
+  @apply hover:brightness-125;
+}
+
+:root[data-theme='dark'] .time-corner,
+:root[data-theme='dark'] .time-axis,
+:root[data-theme='dark'] .calendar-day-header,
+:root[data-theme='dark'] .calendar-day-column {
+  @apply border-slate-700;
+}
+
+@media (max-width: 900px) {
+  .top-nav .theme-toggle {
+    @apply ml-0;
+  }
+
+  .custom-calendar-grid {
+    grid-template-columns: 48px repeat(var(--calendar-days), minmax(0, 1fr));
+  }
+}
