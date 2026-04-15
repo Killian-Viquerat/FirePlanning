@@ -48,9 +48,11 @@ Fonctions disponibles :
 - **EQ** - Équipier
 - **CE** - Chef extinction
 
-## Semaine de piquet
+## Semaines de piquet
 
-La semaine de piquet est définie par une date de début et de fin.  
+Chaque semaine de piquet est définie par une date de début et de fin.  
+L'application permet de planifier **plusieurs semaines** ; dès qu'une semaine est ajoutée, elle devient **active automatiquement**.
+
 Le découpage opérationnel utilisé par l'application est :
 - 1 créneau **weekend** (du début de la semaine de piquet jusqu'au lundi 06:00, borné par la date de fin)
 - puis des créneaux **journaliers** de 18:00 à 06:00 (bornés par la date de fin)
@@ -79,7 +81,8 @@ Le découpage opérationnel utilisé par l'application est :
 - Création, modification et suppression du groupe de piquet
 - Ajout, modification et suppression des sapeurs-pompiers
 - Affectation des pompiers au groupe
-- Définition, modification et suppression de la semaine de piquet
+- Définition, modification et suppression de **plusieurs semaines** de piquet
+- Sélection d'une **semaine cible** pour l'édition, avec activation automatique de toutes les semaines enregistrées
 - Gestion des absences (formulaire + calendrier individuel)
 - Initialisation automatique de données de démonstration si aucune donnée n'est chargée
 - Navigation automatique vers le calendrier individuel en mode démo
@@ -91,6 +94,7 @@ Le découpage opérationnel utilisé par l'application est :
   - conflits d'absence avec jour + horaires exacts
   - absents pouvant couvrir les rôles manquants
 - Import/Export JSON (groupe, pompiers, membres du groupe, semaine, absences)
+- Import/Export JSON multi-semaines (`dutyWeeks`, `selectedDutyWeekId`, `activeDutyWeekIds`) avec compatibilité ancien format (`dutyWeek`)
 - Compatibilité import avec ancien format (`group.memberIds`) et format actuel (`groupMemberIds`)
 - Navigation multi-pages avec barre de navigation haute
 - Thème clair/sombre (toggle "Black theme / White theme")
@@ -143,6 +147,17 @@ Le découpage opérationnel utilisé par l'application est :
 - Stockage local uniquement pour le thème (localStorage)
 - **Calendrier implémenté en interne** (grille horaire custom), sans librairie externe de calendrier
 
+## Architecture modulaire
+
+- `src/App.svelte` : point d'entrée minimal (composition uniquement)
+- `src/lib/features/planning/PlanningShell.svelte` : orchestrateur (state global, règles métier, handlers)
+- `src/lib/pages/*` : pages fonctionnelles (dashboard, groupe, pompiers, semaines, absences, alertes, données, calendriers)
+- `src/lib/components/navigation/TopNav.svelte` : navigation haute
+- `src/lib/components/common/*` : composants réutilisables (`GradeBadge`, `RoleBadge`)
+- `src/lib/constants/*` : constantes métier (rôles, grades, app)
+- `src/lib/utils/*` : fonctions pures (dates, normalisation grade, scheduling)
+- Navigation SPA : `svelte-spa-router` (routes hash `#/...`, redirection via `push('/...')`, rendu par composant `Router`)
+
 ## Description de l'implémentation
 
 ### 1) Gestion du groupe
@@ -155,15 +170,17 @@ Le découpage opérationnel utilisé par l'application est :
 - CRUD complet : ajout, modification, suppression
 - Impact métier : les rôles d'un pompier alimentent la couverture des contraintes et les badges d'affichage
 
-### 3) Semaine de piquet et créneaux opérationnels
-- Données : `dutyWeek.start`, `dutyWeek.end`
+### 3) Semaines de piquet et créneaux opérationnels
+- Données : `dutyWeeks[]`, `selectedDutyWeekId`, `activeDutyWeekIds[]`, `dutyWeek` (semaine cible)
 - Génération des créneaux (`shiftSlots`) :
   - un créneau "weekend" depuis le début jusqu'au lundi 06:00 (borné)
   - puis des créneaux journaliers 18:00 → 06:00 (bornés)
-- Ces créneaux servent de base à l'affichage global et au moteur d'alertes
+- Les créneaux sont calculés sur **toutes les semaines actives** (toutes les semaines enregistrées) et servent de base à l'affichage global et au moteur d'alertes
 
 ### 4) Gestion des absences (formulaire + calendrier)
 - Données : `absences` (id, firefighterId, start, end)
+- Les absences sont rattachées à la semaine cible (`weekId`)
+- Les listes et indicateurs affichent les absences de **toutes les semaines actives** (automatiques)
 - Création par formulaire et par interactions directes sur le calendrier
 - Suppression rapide par clic sur un bloc d'absence
 
@@ -201,11 +218,12 @@ Le découpage opérationnel utilisé par l'application est :
 - Mécanisme d'assignation avec backtracking pour limiter les faux positifs
 
 ### 9) Import / Export JSON
-- Export complet de l'état : `group`, `firefighters`, `groupMemberIds`, `dutyWeek`, `absences`
+- Export complet de l'état : `group`, `firefighters`, `groupMemberIds`, `dutyWeek`, `dutyWeeks`, `selectedDutyWeekId`, `activeDutyWeekIds`, `absences`
 - Import avec validation minimale et filtrage des identifiants inconnus
 - Compatibilité ascendante :
   - priorité à `groupMemberIds`
   - fallback automatique vers `group.memberIds` pour les anciens exports
+  - fallback automatique de `dutyWeek` vers `dutyWeeks` pour les anciens exports
 
 ### 10) UX globale et thème
 - Navigation par pages (hash routing interne)

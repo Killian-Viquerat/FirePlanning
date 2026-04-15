@@ -14,5 +14,8 @@
     "svelte": "^5.55.1",
     "tailwindcss": "^4.2.2",
     "vite": "^8.0.4"
+  },
+  "dependencies": {
+    "svelte-spa-router": "^5.0.1"
   }
 }

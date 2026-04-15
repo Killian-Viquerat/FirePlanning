@@ -155,6 +155,44 @@ small {
   @apply hidden;
 }
 
+/* Extra spacing for non-calendar pages only */
+main:not(.calendar-page) {
+  @apply gap-5;
+}
+
+main:not(.calendar-page) .card {
+  @apply p-5 md:p-6;
+}
+
+main:not(.calendar-page) .card h2 {
+  @apply mb-4;
+}
+
+main:not(.calendar-page) .row {
+  @apply mb-2 gap-4 md:gap-5;
+}
+
+main:not(.calendar-page) .grid {
+  @apply gap-4 md:gap-5;
+}
+
+main:not(.calendar-page) .checks {
+  @apply gap-4;
+}
+
+main:not(.calendar-page) .check {
+  @apply px-4 py-2.5;
+}
+
+main:not(.calendar-page) .list {
+  @apply mt-4 gap-3;
+}
+
+main:not(.calendar-page) .list article,
+main:not(.calendar-page) .list .list-link {
+  @apply px-4 py-3;
+}
+
 .calendar-page .calendar-card {
   @apply min-h-[72vh] overflow-hidden border-slate-300 bg-gradient-to-b from-white to-slate-50;
 }
