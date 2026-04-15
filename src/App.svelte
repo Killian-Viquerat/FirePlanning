@@ -863,6 +863,7 @@
       if (isSelectingIndividual) {
         commitIndividualSelection();
       }
+      isSelectingIndividual = false;
     };
     const handleWindowPointerMove = (event) => {
       if (!isSelectingIndividual || activePage !== 'calendrier-individuel') return;
@@ -895,7 +896,9 @@
         start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       };
-      console.log('📦 Demo data initialized');
+      // Auto-navigate to individual calendar for demo
+      activePage = 'calendrier-individuel';
+      window.location.hash = 'calendrier-individuel';
     }
 
     activePage = getPageFromHash();

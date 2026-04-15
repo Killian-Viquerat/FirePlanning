@@ -243,7 +243,7 @@ small {
 
 .calendar-slot-line {
   height: var(--calendar-row-height);
-  @apply border-b border-slate-100;
+  @apply border-b border-slate-100 relative z-10;
 }
 
 .calendar-slot-line.selectable {
@@ -261,6 +261,7 @@ small {
 .calendar-event-block.presence {
   background: #16a34a;
   color: #ffffff;
+  pointer-events: none;
 }
 
 .calendar-event-block.absence {
