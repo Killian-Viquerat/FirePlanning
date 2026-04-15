@@ -899,9 +899,9 @@
       // Auto-navigate to individual calendar for demo
       activePage = 'calendrier-individuel';
       window.location.hash = 'calendrier-individuel';
+    } else {
+      activePage = getPageFromHash();
     }
-
-    activePage = getPageFromHash();
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     if (savedTheme === 'dark' || savedTheme === 'light') {
       applyTheme(savedTheme === 'dark');
