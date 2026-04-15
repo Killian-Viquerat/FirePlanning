@@ -205,7 +205,11 @@
     individualSelectionEndSlot = null;
   };
   const beginIndividualSelection = (slotIndex, event) => {
-    if (!selectedIndividualFirefighterId) return;
+    // Use selected firefighter or first available
+    const firefighterId = selectedIndividualFirefighterId || (groupMembers[0]?.id ?? null);
+    if (!firefighterId) {
+      return;
+    }
     suppressNextIndividualSlotClick = false;
     isSelectingIndividual = true;
     individualSelectionStartSlot = slotIndex;
@@ -236,7 +240,6 @@
     clearIndividualSelection();
   };
   const addAbsenceAtSlot = (slotIndex) => {
-    if (!selectedIndividualFirefighterId) return;
     const startDate = addMinutes(individualRange.start, slotIndex * SLOT_MINUTES);
     const endDate = addMinutes(startDate, SLOT_MINUTES);
     addAbsenceFromCalendar(startDate.toISOString(), endDate.toISOString());
@@ -490,15 +493,17 @@
   };
 
   const addAbsenceFromCalendar = (start, end) => {
-    if (!selectedIndividualFirefighterId || !isValidDateRange(start, end)) return;
-    if (dutyWeek.start && dutyWeek.end) {
-      if (!overlaps(toTs(start), toTs(end), toTs(dutyWeek.start), toTs(dutyWeek.end))) return;
+    // Use selected firefighter or first available
+    const firefighterId = selectedIndividualFirefighterId || (groupMembers[0]?.id ?? null);
+    if (!firefighterId || !isValidDateRange(start, end)) {
+      return;
     }
+
     absences = [
       ...absences,
       {
         id: nextId(),
-        firefighterId: selectedIndividualFirefighterId,
+        firefighterId: firefighterId,
         start,
         end
       }
@@ -643,55 +648,118 @@
     .filter((item) => item.count > 0)
     .sort((a, b) => b.count - a.count);
 
-  $: calendarEvents = shiftSlots.flatMap((slot) => {
-    const slotStartMs = toTs(slot.start);
-    const slotEndMs = toTs(slot.end);
+  $: calendarEvents = [
+    ...shiftSlots.flatMap((slot) => {
+      const slotStartMs = toTs(slot.start);
+      const slotEndMs = toTs(slot.end);
 
-    return groupMembers.flatMap((member) => {
-      const memberAbsences = absences
-        .filter((absence) => absence.firefighterId === member.id)
-        .sort((a, b) => toTs(a.start) - toTs(b.start));
+      return groupMembers.flatMap((member) => {
+        const memberAbsences = absences
+          .filter((absence) => absence.firefighterId === member.id)
+          .sort((a, b) => toTs(a.start) - toTs(b.start));
 
-      const slotAbsenceSegments = memberAbsences
-        .map((absence) => ({
-          absenceId: absence.id,
-          start: Math.max(slotStartMs, toTs(absence.start)),
-          end: Math.min(slotEndMs, toTs(absence.end))
-        }))
-        .filter((segment) => segment.end > segment.start);
+        const slotAbsenceSegments = memberAbsences
+          .map((absence) => ({
+            absenceId: absence.id,
+            start: Math.max(slotStartMs, toTs(absence.start)),
+            end: Math.min(slotEndMs, toTs(absence.end))
+          }))
+          .filter((segment) => segment.end > segment.start);
 
-      const presenceEvents = subtractFromInterval(slotStartMs, slotEndMs, slotAbsenceSegments).map((segment) => ({
-        id: nextId(),
-        title: `${member.prenom} - Permanence`,
-        start: new Date(segment.start).toISOString(),
-        end: new Date(segment.end).toISOString(),
-        backgroundColor: PRESENCE_COLOR,
-        borderColor: PRESENCE_COLOR,
-        classNames: ['presence-event'],
-        extendedProps: {
-          eventType: 'presence',
-          firefighterId: member.id
+        const presenceEvents = subtractFromInterval(slotStartMs, slotEndMs, slotAbsenceSegments).map((segment) => ({
+          id: nextId(),
+          title: `${member.prenom} - Permanence`,
+          start: new Date(segment.start).toISOString(),
+          end: new Date(segment.end).toISOString(),
+          backgroundColor: PRESENCE_COLOR,
+          borderColor: PRESENCE_COLOR,
+          classNames: ['presence-event'],
+          extendedProps: {
+            eventType: 'presence',
+            firefighterId: member.id
+          }
+        }));
+
+        const absenceEvents = slotAbsenceSegments.map((segment) => ({
+          id: nextId(),
+          title: `${member.prenom} - Absent`,
+          start: new Date(segment.start).toISOString(),
+          end: new Date(segment.end).toISOString(),
+          backgroundColor: ABSENCE_COLOR,
+          borderColor: ABSENCE_COLOR,
+          classNames: ['absence-event'],
+          extendedProps: {
+            eventType: 'absence',
+            firefighterId: member.id,
+            absenceId: segment.absenceId
+          }
+        }));
+
+        return [...presenceEvents, ...absenceEvents];
+      });
+    }),
+    // Add orphan absence parts: absences that don't overlap with any shift slot, OR parts that extend beyond slots
+    ...groupMembers.flatMap((member) => {
+      const memberAbsences = absences.filter((absence) => absence.firefighterId === member.id);
+      const orphanParts = [];
+
+      for (const absence of memberAbsences) {
+        const absenceStart = toTs(absence.start);
+        const absenceEnd = toTs(absence.end);
+
+        // Find all slot overlaps for this absence
+        const overlappingSlots = shiftSlots
+          .map((slot) => ({
+            start: toTs(slot.start),
+            end: toTs(slot.end)
+          }))
+          .filter((slot) => overlaps(absenceStart, absenceEnd, slot.start, slot.end));
+
+        if (overlappingSlots.length === 0) {
+          // No slot overlap - entire absence is orphan
+          orphanParts.push({ start: absenceStart, end: absenceEnd, absenceId: absence.id });
+        } else {
+          // Find parts of absence that extend beyond all slots
+          const coveredIntervals = overlappingSlots.map((slot) => ({
+            start: Math.max(absenceStart, slot.start),
+            end: Math.min(absenceEnd, slot.end)
+          }));
+
+          // Compute uncovered intervals within the absence
+          const uncovered = [];
+          let currentPos = absenceStart;
+
+          for (const covered of coveredIntervals.sort((a, b) => a.start - b.start)) {
+            if (currentPos < covered.start) {
+              uncovered.push({ start: currentPos, end: covered.start, absenceId: absence.id });
+            }
+            currentPos = Math.max(currentPos, covered.end);
+          }
+
+          if (currentPos < absenceEnd) {
+            uncovered.push({ start: currentPos, end: absenceEnd, absenceId: absence.id });
+          }
+
+          orphanParts.push(...uncovered);
         }
-      }));
+      }
 
-      const absenceEvents = slotAbsenceSegments.map((segment) => ({
+      return orphanParts.map((part) => ({
         id: nextId(),
         title: `${member.prenom} - Absent`,
-        start: new Date(segment.start).toISOString(),
-        end: new Date(segment.end).toISOString(),
+        start: new Date(part.start).toISOString(),
+        end: new Date(part.end).toISOString(),
         backgroundColor: ABSENCE_COLOR,
         borderColor: ABSENCE_COLOR,
         classNames: ['absence-event'],
         extendedProps: {
           eventType: 'absence',
           firefighterId: member.id,
-          absenceId: segment.absenceId
+          absenceId: part.absenceId
         }
       }));
-
-      return [...presenceEvents, ...absenceEvents];
-    });
-  });
+    })
+  ];
 
   $: individualCalendarEvents = calendarEvents.filter((event) => event.extendedProps?.firefighterId === selectedIndividualFirefighterId);
 
@@ -796,6 +864,39 @@
         commitIndividualSelection();
       }
     };
+    const handleWindowPointerMove = (event) => {
+      if (!isSelectingIndividual || activePage !== 'calendrier-individuel') return;
+      
+      // Find the calendar day column
+      const calendarColumn = document.querySelector('.calendar-day-column');
+      if (!calendarColumn) return;
+      
+      const rect = calendarColumn.getBoundingClientRect();
+      if (event.clientY < rect.top || event.clientY > rect.bottom) return;
+      
+      // Calculate slot index from Y position
+      const relativeY = event.clientY - rect.top;
+      const slotIndex = Math.floor((relativeY / rect.height) * SLOTS_PER_DAY);
+      
+      if (slotIndex >= 0 && slotIndex < SLOTS_PER_DAY) {
+        extendIndividualSelection(slotIndex);
+      }
+    };
+
+    // Initialize demo data if nothing is loaded
+    if (firefighters.length === 0) {
+      firefighters = [
+        { id: 'demo-ff1', grade: 'Sapeur', nom: 'Martin', prenom: 'Jean', fonctions: [] },
+        { id: 'demo-ff2', grade: 'Sergent', nom: 'Dupont', prenom: 'Pierre', fonctions: [] }
+      ];
+      groupMemberIds = ['demo-ff1', 'demo-ff2'];
+      group = { id: 'demo-group', name: 'Démo', code: 'DEMO', memberIds: groupMemberIds };
+      dutyWeek = {
+        start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      };
+      console.log('📦 Demo data initialized');
+    }
 
     activePage = getPageFromHash();
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -807,11 +908,13 @@
     window.addEventListener('hashchange', handleHashChange);
     window.addEventListener('mouseup', handleWindowMouseUp);
     window.addEventListener('pointerup', handleWindowMouseUp);
+    window.addEventListener('pointermove', handleWindowPointerMove);
 
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
       window.removeEventListener('mouseup', handleWindowMouseUp);
       window.removeEventListener('pointerup', handleWindowMouseUp);
+      window.removeEventListener('pointermove', handleWindowPointerMove);
     };
   });
 
@@ -1330,9 +1433,6 @@
                 class:selected={isIndividualSlotSelected(slot)}
                 aria-label={`Créer une absence à partir de ${formatHourLabel(slot)}`}
                 on:pointerdown={(event) => beginIndividualSelection(slot, event)}
-                on:pointerenter={() => extendIndividualSelection(slot)}
-                on:pointermove={(event) => event.buttons === 1 && extendIndividualSelection(slot)}
-                on:pointerup={commitIndividualSelection}
                 on:click={() => handleIndividualSlotClick(slot)}
               ></button>
             {/each}

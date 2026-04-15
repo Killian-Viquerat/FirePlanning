@@ -88,7 +88,7 @@ Le découpage opérationnel utilisé par l'application est :
 - Sélection du pompier à éditer
 - Ajout d'absence :
   - clic sur un créneau (30 min)
-  - ou clic-glisser sur plusieurs créneaux
+  - ou clic-glisser (drag) sur plusieurs créneaux pour ajouter rapidement une absence
 - Suppression d'absence par clic sur un bloc rouge
 - Affichage présence (vert) + absence (rouge)
 
