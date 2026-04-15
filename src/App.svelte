@@ -9,6 +9,21 @@
     EQ: 'Équipier',
     CE: 'Chef extinction'
   };
+  const GRADE_OPTIONS = [
+    { value: 'Sapeur', acronym: 'Sap', tone: 'gray' },
+    { value: 'Appointé', acronym: 'App', tone: 'gray' },
+    { value: 'Caporal', acronym: 'Cpl', tone: 'orange' },
+    { value: 'Sergent', acronym: 'Sgt', tone: 'blue' },
+    { value: 'Sergent Chef', acronym: 'Sgtc', tone: 'blue' },
+    { value: 'Sergent Major', acronym: 'Sgtm', tone: 'green' },
+    { value: 'Fourrier', acronym: 'Four', tone: 'green' },
+    { value: 'Sergent Major Chef', acronym: 'Sgtmc', tone: 'green' },
+    { value: 'Adjudant', acronym: 'Adj', tone: 'green' },
+    { value: 'Lieutenant', acronym: 'Lt', tone: 'red' },
+    { value: 'Premier Lieutenant', acronym: 'Plt', tone: 'red' },
+    { value: 'Capitaine', acronym: 'Cap', tone: 'red' },
+    { value: 'Major', acronym: 'Maj', tone: 'red' }
+  ];
   const WEEKEND_REQUIREMENTS = { APR: 2, CPL: 1, EQ: 1, CE: 1 };
   const WEEKDAY_REQUIREMENTS = { CE: 1, CPL: 1, MEA: 1, APR: 2, EQ: 1 };
   const PRESENCE_COLOR = '#16a34a';
@@ -45,6 +60,7 @@
   };
 
   let importInput;
+  let individualCalendarColumnEl;
   let globalCalendarView = 'day';
   let globalCalendarCursor = new Date();
   let individualCalendarCursor = new Date();
@@ -101,7 +117,29 @@
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
       .trim();
+  const getGradeOption = (grade) => {
+    const normalized = normalizeText(grade);
+    if (!normalized) return null;
+    return (
+      GRADE_OPTIONS.find(
+        (option) => normalizeText(option.value) === normalized || normalizeText(option.acronym) === normalized
+      ) ?? null
+    );
+  };
+  const isKnownGrade = (grade) => Boolean(getGradeOption(grade));
+  const normalizeGradeValue = (grade) => {
+    const option = getGradeOption(grade);
+    if (option) return option.value;
+    return String(grade ?? '').trim();
+  };
+  const getGradeAcronym = (grade) => {
+    const option = getGradeOption(grade);
+    if (option) return option.acronym;
+    const fallback = String(grade ?? '').trim();
+    return fallback || 'N/A';
+  };
   const getRoleBadgeText = (code) => `${FUNCTION_LABELS[code] ?? code} (${code})`;
   const formatRangeDate = (date) =>
     date.toLocaleDateString('fr-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -204,9 +242,9 @@
     individualSelectionStartSlot = null;
     individualSelectionEndSlot = null;
   };
+  const getCalendarFirefighterId = () => selectedIndividualFirefighterId || (groupMembers[0]?.id ?? null);
   const beginIndividualSelection = (slotIndex, event) => {
-    // Use selected firefighter or first available
-    const firefighterId = selectedIndividualFirefighterId || (groupMembers[0]?.id ?? null);
+    const firefighterId = getCalendarFirefighterId();
     if (!firefighterId) {
       return;
     }
@@ -264,22 +302,7 @@
   const getIndividualSegmentStyle = (segment) =>
     `top:${segment.topPx}px;height:${segment.heightPx}px;background:${segment.backgroundColor};color:${segment.textColor};left:2px;right:2px;`;
   const getGradeBadgeTone = (grade) => {
-    const normalized = normalizeText(grade);
-    if (!normalized) return 'gray';
-    if (normalized.includes('adjudant')) return 'green';
-    if (normalized.includes('sergent')) return 'blue';
-    if (normalized.includes('caporal')) return 'orange';
-    if (
-      normalized.includes('lieutenant') ||
-      normalized.includes('capitaine') ||
-      normalized.includes('commandant') ||
-      normalized.includes('major') ||
-      normalized.includes('colonel') ||
-      normalized.includes('officier')
-    ) {
-      return 'red';
-    }
-    return 'gray';
+    return getGradeOption(grade)?.tone ?? 'gray';
   };
   const getPageFromHash = () => {
     const page = window.location.hash.replace('#', '');
@@ -417,7 +440,7 @@
         id: nextId(),
         nom: firefighterForm.nom.trim(),
         prenom: firefighterForm.prenom.trim(),
-        grade: firefighterForm.grade.trim(),
+        grade: normalizeGradeValue(firefighterForm.grade),
         fonctions: [...firefighterForm.fonctions]
       }
     ];
@@ -443,7 +466,7 @@
         ...firefighter,
         nom: firefighterEditForm.nom.trim(),
         prenom: firefighterEditForm.prenom.trim(),
-        grade: firefighterEditForm.grade.trim(),
+        grade: normalizeGradeValue(firefighterEditForm.grade),
         fonctions: [...firefighterEditForm.fonctions]
       };
     });
@@ -493,8 +516,7 @@
   };
 
   const addAbsenceFromCalendar = (start, end) => {
-    // Use selected firefighter or first available
-    const firefighterId = selectedIndividualFirefighterId || (groupMembers[0]?.id ?? null);
+    const firefighterId = getCalendarFirefighterId();
     if (!firefighterId || !isValidDateRange(start, end)) {
       return;
     }
@@ -535,9 +557,19 @@
     const data = JSON.parse(content);
 
     group = data.group || null;
-    firefighters = Array.isArray(data.firefighters) ? data.firefighters : [];
+    firefighters = Array.isArray(data.firefighters)
+      ? data.firefighters.map((firefighter) => ({
+          ...firefighter,
+          grade: normalizeGradeValue(firefighter.grade)
+        }))
+      : [];
     const knownIds = new Set(firefighters.map((f) => f.id));
-    groupMemberIds = Array.isArray(data.groupMemberIds) ? data.groupMemberIds.filter((id) => knownIds.has(id)) : [];
+    const importedMemberIds = Array.isArray(data.groupMemberIds)
+      ? data.groupMemberIds
+      : Array.isArray(data.group?.memberIds)
+        ? data.group.memberIds
+        : [];
+    groupMemberIds = importedMemberIds.filter((id) => knownIds.has(id));
     dutyWeek = data.dutyWeek || { start: '', end: '' };
     absences = Array.isArray(data.absences) ? data.absences.filter((a) => knownIds.has(a.firefighterId)) : [];
     if (dutyWeek.start) {
@@ -624,7 +656,7 @@
     firefighterEditForm = {
       nom: selectedEditFirefighter.nom,
       prenom: selectedEditFirefighter.prenom,
-      grade: selectedEditFirefighter.grade,
+      grade: normalizeGradeValue(selectedEditFirefighter.grade),
       fonctions: [...selectedEditFirefighter.fonctions]
     };
   }
@@ -867,18 +899,16 @@
     };
     const handleWindowPointerMove = (event) => {
       if (!isSelectingIndividual || activePage !== 'calendrier-individuel') return;
-      
-      // Find the calendar day column
-      const calendarColumn = document.querySelector('.calendar-day-column');
+
+      const calendarColumn = individualCalendarColumnEl;
       if (!calendarColumn) return;
-      
+
       const rect = calendarColumn.getBoundingClientRect();
-      if (event.clientY < rect.top || event.clientY > rect.bottom) return;
-      
-      // Calculate slot index from Y position
-      const relativeY = event.clientY - rect.top;
+      if (rect.height <= 0) return;
+
+      const relativeY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height - 1);
       const slotIndex = Math.floor((relativeY / rect.height) * SLOTS_PER_DAY);
-      
+
       if (slotIndex >= 0 && slotIndex < SLOTS_PER_DAY) {
         extendIndividualSelection(slotIndex);
       }
@@ -1021,7 +1051,7 @@
           {#each absencesByFirefighter as item}
             <article>
               <span class="inline-flex items-center gap-2">
-                <span class={`grade-badge ${getGradeBadgeTone(item.member.grade)}`}>{item.member.grade}</span>
+                <span class={`grade-badge ${getGradeBadgeTone(item.member.grade)}`}>{getGradeAcronym(item.member.grade)}</span>
                 <strong>{item.member.prenom} {item.member.nom}</strong>
               </span>
               <span>{item.count} absence(s)</span>
@@ -1079,7 +1109,15 @@
       <div class="grid">
         <label>Nom <input type="text" bind:value={firefighterForm.nom} /></label>
         <label>Prénom <input type="text" bind:value={firefighterForm.prenom} /></label>
-        <label>Grade <input type="text" bind:value={firefighterForm.grade} /></label>
+        <label>
+          Grade
+          <select bind:value={firefighterForm.grade}>
+            <option value="">Choisir un grade...</option>
+            {#each GRADE_OPTIONS as option}
+              <option value={option.value}>{option.value} ({option.acronym})</option>
+            {/each}
+          </select>
+        </label>
       </div>
 
       <p>Fonctions:</p>
@@ -1109,7 +1147,7 @@
                 checked={groupMemberIds.includes(firefighter.id)}
                 on:change={(event) => updateGroupAssignment(firefighter.id, event.currentTarget.checked)}
               />
-              <span class={`grade-badge ${getGradeBadgeTone(firefighter.grade)}`}>{firefighter.grade}</span>
+              <span class={`grade-badge ${getGradeBadgeTone(firefighter.grade)}`}>{getGradeAcronym(firefighter.grade)}</span>
               <span>{firefighter.prenom} {firefighter.nom}</span>
             </label>
           {/each}
@@ -1123,7 +1161,7 @@
           {#each firefighters as firefighter}
             <button class="list-link" on:click={() => openFirefighterEditor(firefighter.id)}>
               <span class="inline-flex items-center gap-2">
-                <span class={`grade-badge ${getGradeBadgeTone(firefighter.grade)}`}>{firefighter.grade}</span>
+                <span class={`grade-badge ${getGradeBadgeTone(firefighter.grade)}`}>{getGradeAcronym(firefighter.grade)}</span>
                 <strong>{firefighter.prenom} {firefighter.nom}</strong>
               </span>
               <span class="ml-2 inline-flex flex-wrap gap-1 align-middle">
@@ -1152,7 +1190,7 @@
             Pompier
             <select bind:value={selectedEditFirefighterId}>
               {#each firefighters as firefighter}
-                <option value={firefighter.id}>[{firefighter.grade}] {firefighter.prenom} {firefighter.nom}</option>
+                <option value={firefighter.id}>[{getGradeAcronym(firefighter.grade)}] {firefighter.prenom} {firefighter.nom}</option>
               {/each}
             </select>
           </label>
@@ -1161,7 +1199,18 @@
         <div class="grid">
           <label>Nom <input type="text" bind:value={firefighterEditForm.nom} /></label>
           <label>Prénom <input type="text" bind:value={firefighterEditForm.prenom} /></label>
-          <label>Grade <input type="text" bind:value={firefighterEditForm.grade} /></label>
+          <label>
+            Grade
+            <select bind:value={firefighterEditForm.grade}>
+              {#if firefighterEditForm.grade && !isKnownGrade(firefighterEditForm.grade)}
+                <option value={firefighterEditForm.grade}>{firefighterEditForm.grade}</option>
+              {/if}
+              <option value="">Choisir un grade...</option>
+              {#each GRADE_OPTIONS as option}
+                <option value={option.value}>{option.value} ({option.acronym})</option>
+              {/each}
+            </select>
+          </label>
         </div>
 
         <p>Fonctions:</p>
@@ -1224,7 +1273,7 @@
           <select bind:value={absenceForm.firefighterId}>
             <option value="">Choisir...</option>
             {#each groupMembers as member}
-              <option value={member.id}>[{member.grade}] {member.prenom} {member.nom}</option>
+              <option value={member.id}>[{getGradeAcronym(member.grade)}] {member.prenom} {member.nom}</option>
             {/each}
           </select>
         </label>
@@ -1240,7 +1289,7 @@
             {@const member = firefighters.find((f) => f.id === absence.firefighterId)}
             <article>
               <span class="inline-flex items-center gap-2">
-                <span class={`grade-badge ${getGradeBadgeTone(member?.grade ?? '')}`}>{member?.grade ?? 'N/A'}</span>
+                <span class={`grade-badge ${getGradeBadgeTone(member?.grade ?? '')}`}>{getGradeAcronym(member?.grade ?? '')}</span>
                 <span>{member?.prenom} {member?.nom}: {new Date(absence.start).toLocaleString('fr-CH')} - {new Date(absence.end).toLocaleString('fr-CH')}</span>
               </span>
               <button on:click={() => removeAbsence(absence.id)}>Supprimer</button>
@@ -1274,7 +1323,7 @@
                   <span class="inline-flex items-center gap-2">
                     Conflit absence:
                     {#if conflict.member}
-                      <span class={`grade-badge ${getGradeBadgeTone(conflict.member.grade)}`}>{conflict.member.grade}</span>
+                      <span class={`grade-badge ${getGradeBadgeTone(conflict.member.grade)}`}>{getGradeAcronym(conflict.member.grade)}</span>
                       <span>{conflict.member.prenom} {conflict.member.nom}</span>
                     {:else}
                       <span>Inconnu</span>
@@ -1289,7 +1338,7 @@
                     Absents pouvant couvrir <span class="role-badge">{getRoleBadgeText(candidate.role)}</span>:
                     {#if candidate.members.length > 0}
                       {#each candidate.members as person, idx}
-                        <span class={`grade-badge ${getGradeBadgeTone(person.grade)}`}>{person.grade}</span>
+                        <span class={`grade-badge ${getGradeBadgeTone(person.grade)}`}>{getGradeAcronym(person.grade)}</span>
                         <span>{person.prenom} {person.nom}</span>{#if idx < candidate.members.length - 1}, {/if}
                       {/each}
                     {:else}
@@ -1351,7 +1400,7 @@
           {#each globalColumnHeaders as header}
             <div class={`calendar-day-header ${header.member ? 'member-header' : ''}`}>
               {#if header.member}
-                <span class={`grade-badge ${getGradeBadgeTone(header.member.grade)}`}>{header.member.grade}</span>
+                <span class={`grade-badge ${getGradeBadgeTone(header.member.grade)}`}>{getGradeAcronym(header.member.grade)}</span>
                 <span class="calendar-member-name">{header.member.prenom} {header.member.nom}</span>
               {:else}
                 {header.label}
@@ -1396,7 +1445,7 @@
           <select bind:value={selectedIndividualFirefighterId}>
             <option value="">Choisir un pompier...</option>
             {#each groupMembers as member}
-              <option value={member.id}>[{member.grade}] {member.prenom} {member.nom}</option>
+              <option value={member.id}>[{getGradeAcronym(member.grade)}] {member.prenom} {member.nom}</option>
             {/each}
           </select>
         </label>
@@ -1428,7 +1477,7 @@
             {/each}
           </div>
 
-          <div class="calendar-day-column">
+          <div class="calendar-day-column" bind:this={individualCalendarColumnEl}>
             {#each HALF_HOUR_SLOTS as slot}
               <button
                 type="button"
@@ -1436,6 +1485,7 @@
                 class:selected={isIndividualSlotSelected(slot)}
                 aria-label={`Créer une absence à partir de ${formatHourLabel(slot)}`}
                 on:pointerdown={(event) => beginIndividualSelection(slot, event)}
+                on:pointerenter={() => extendIndividualSelection(slot)}
                 on:click={() => handleIndividualSlotClick(slot)}
               ></button>
             {/each}
