@@ -892,24 +892,6 @@
       }
     };
 
-    // Initialize demo data if nothing is loaded
-    if (firefighters.length === 0) {
-      firefighters = [
-        { id: 'demo-ff1', grade: 'Sapeur', nom: 'Martin', prenom: 'Jean', fonctions: [] },
-        { id: 'demo-ff2', grade: 'Sergent', nom: 'Dupont', prenom: 'Pierre', fonctions: [] }
-      ];
-      groupMemberIds = ['demo-ff1', 'demo-ff2'];
-      group = { id: 'demo-group', name: 'Démo', code: 'DEMO', memberIds: groupMemberIds };
-      const demoWeek = {
-        id: 'demo-week-1',
-        start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-      };
-      dutyWeeks = [demoWeek];
-      selectedDutyWeekId = demoWeek.id;
-      activeDutyWeekIds = [demoWeek.id];
-      dutyWeek = { ...demoWeek };
-    }
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     if (savedTheme === 'dark' || savedTheme === 'light') {
       applyTheme(savedTheme === 'dark');

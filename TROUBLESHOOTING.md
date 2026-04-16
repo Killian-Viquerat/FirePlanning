@@ -34,10 +34,10 @@ npm run dev
 
 ### Symptom: No firefighters in dropdown
 **Solution:**
-1. Demo data should load automatically
-2. If empty, try refreshing the page
-3. Check browser console for: "[Demo] Initialized data" message
-4. If missing, demo initialization failed
+1. This is expected on a fresh install (no default data)
+2. Add firefighters from the "Pompiers" page
+3. Or import an existing JSON backup from the "Données" page
+4. Refresh and verify the dropdown now contains your data
 
 ## If Clicking/Dragging Doesn't Work
 
@@ -96,7 +96,7 @@ If app is in a bad state:
 
 ```bash
 # Option 1: Clear all data and reload
-# Just refresh the page - demo data will reload
+# Refresh the page, then re-import your saved JSON if needed
 
 # Option 2: Hard refresh (clears cache)
 # Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)

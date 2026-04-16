@@ -15,12 +15,10 @@ The app is running at: **http://localhost:5173/**
 4. **Click and drag** → Creates multi-slot absence
 5. **Click red block** → Deletes the absence
 
-### Demo Data
-The app comes with 2 demo firefighters:
-- Jean Martin (Sapeur)
-- Pierre Dupont (Sergent)
+### Initial Data
+The app starts with no default data.
 
-No manual setup required - just open and start using!
+Create your group, firefighters, and duty weeks in the UI, or import a JSON export.
 
 ## Documentation
 
@@ -133,7 +131,7 @@ This ensures complete visibility even when absences span shift boundaries.
 
 - ✅ Fixed calendar page navigation
 - ✅ Removed debug console logs
-- ✅ Added demo data auto-initialization
+- ✅ Removed default demo data initialization
 - ✅ Fixed CSS z-index issues
 - ✅ Implemented orphan interval algorithm
 - ✅ Added comprehensive documentation
